@@ -1,0 +1,153 @@
+<?xml version="1.0"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xlmm="http://systemjtechnology.com" targetNamespace="http://systemjtechnology.com"
+  elementFormDefault="qualified">
+  <!-- Type declaration -->
+  <xs:complexType name="Signal">
+    <xs:attribute name="Name" type="xs:string" use="required" />
+    <xs:attribute name="Class" type="xs:string" use="required" />
+    <xs:anyAttribute processContents="skip" />
+  </xs:complexType>
+
+  <xs:simpleType name="ChanType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[a-zA-Z][a-zA-Z0-9_]*\.[a-zA-Z][a-zA-Z0-9_]*" />
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:complexType name="ClockDomain">
+    <xs:choice minOccurs="0" maxOccurs="unbounded">
+      <xs:element name="iSignal" type="xlmm:Signal" />
+      <xs:element name="oSignal" type="xlmm:Signal" />
+      <xs:element name="oChannel">
+        <xs:complexType>
+          <xs:attribute name="Name" type="xs:string" use="required" />
+          <xs:attribute name="To" type="xlmm:ChanType" use="required" />
+          <xs:attribute name="debug" type="xs:boolean" default="false" />
+        </xs:complexType>
+      </xs:element>
+      <xs:element name="iChannel">
+        <xs:complexType>
+          <xs:attribute name="Name" type="xs:string" use="required" />
+          <xs:attribute name="From" type="xlmm:ChanType" use="required" />
+          <xs:attribute name="debug" type="xs:boolean" default="false" />
+        </xs:complexType>
+      </xs:element>
+    </xs:choice>
+    <xs:attribute name="Name" type="xs:string" use="required" />
+    <xs:attribute name="Class" type="xs:string" use="required" />
+  </xs:complexType>
+  <!-- Type declaration ends -->
+
+  <xs:element name="System">
+    <xs:complexType>
+      <xs:sequence>
+        <!-- Link BEGINS -->
+        <xs:element name="Interconnection" minOccurs="0" maxOccurs="1">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="Link" minOccurs="1" maxOccurs="unbounded">
+                <xs:complexType mixed="true">
+                  <xs:sequence>
+                    <xs:element name="Interface" minOccurs="1" maxOccurs="unbounded">
+                      <xs:complexType>
+                        <xs:attribute name="SubSystem" type="xs:string" use="required" />
+                        <xs:attribute name="Class" type="xs:string" use="required" />
+                        <xs:anyAttribute processContents="skip" />
+                      </xs:complexType>
+                    </xs:element>
+                  </xs:sequence>
+                  <xs:attribute name="Type" use="required">
+                    <xs:simpleType>
+                      <xs:restriction base="xs:string">
+                        <xs:enumeration value="Destination" />
+                        <xs:enumeration value="Local" />
+                      </xs:restriction>
+                    </xs:simpleType>
+                  </xs:attribute>
+                </xs:complexType>
+                <xs:unique name="unique-SubSystem">
+                  <xs:selector xpath="xlmm:Interface" />
+                  <xs:field xpath="@SubSystem" />
+                </xs:unique>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <!-- Link ENDS -->
+
+        <!-- SubSystem BEGINS -->
+        <xs:element name="SubSystem" minOccurs="1" maxOccurs="unbounded">
+          <xs:complexType mixed="true">
+            <xs:choice minOccurs="0" maxOccurs="unbounded">
+              <xs:element name="ClockDomain" type="xlmm:ClockDomain">
+                <xs:unique name="unique-iSignalName">
+                  <xs:selector xpath="xlmm:iSignal" />
+                  <xs:field xpath="@Name" />
+                </xs:unique>
+                <xs:unique name="unique-oSignalName">
+                  <xs:selector xpath="xlmm:oSignal" />
+                  <xs:field xpath="@Name" />
+                </xs:unique>
+                <xs:unique name="unique-iChanName">
+                  <xs:selector xpath="xlmm:iChannel" />
+                  <xs:field xpath="@Name" />
+                </xs:unique>
+                <xs:unique name="unique-oChanName">
+                  <xs:selector xpath="xlmm:oChannel" />
+                  <xs:field xpath="@Name" />
+                </xs:unique>
+              </xs:element>
+              <xs:element name="Scheduler">
+                <xs:complexType mixed="true">
+                  <xs:sequence>
+                    <xs:element name="ClockDomain" type="xlmm:ClockDomain" minOccurs="1" maxOccurs="unbounded">
+                      <xs:unique name="unique-iSignalName2">
+                        <xs:selector xpath="xlmm:iSignal" />
+                        <xs:field xpath="@Name" />
+                      </xs:unique>
+                      <xs:unique name="unique-oSignalName2">
+                        <xs:selector xpath="xlmm:oSignal" />
+                        <xs:field xpath="@Name" />
+                      </xs:unique>
+                      <xs:unique name="unique-iChanName2">
+                        <xs:selector xpath="xlmm:iChannel" />
+                        <xs:field xpath="@Name" />
+                      </xs:unique>
+                      <xs:unique name="unique-oChanName2">
+                        <xs:selector xpath="xlmm:oChannel" />
+                        <xs:field xpath="@Name" />
+                      </xs:unique>
+                    </xs:element>
+                  </xs:sequence>
+                  <xs:attribute name="Class" type="xs:string" use="required" />
+                  <xs:attribute name="Args" type="xs:string" />
+                </xs:complexType>
+              </xs:element>
+            </xs:choice>
+            <xs:attribute name="Name" type="xs:string" use="required" />
+            <xs:attribute name="Local" type="xs:boolean" default="false" />
+          </xs:complexType>
+          <xs:unique name="unique-iChanFrom">
+            <xs:selector xpath="xlmm:ClockDomain/xlmm:iChannel|xlmm:Scheduler/xlmm:ClockDomain/xlmm:iChannel" />
+            <xs:field xpath="@From" />
+          </xs:unique>
+          <xs:unique name="unique-oChanTo">
+            <xs:selector xpath="xlmm:ClockDomain/xlmm:oChannel|xlmm:Scheduler/xlmm:ClockDomain/xlmm:oChannel" />
+            <xs:field xpath="@To" />
+          </xs:unique>
+          <xs:unique name="unique-CDName">
+            <xs:selector xpath="xlmm:ClockDomain|xlmm:Scheduler/xlmm:ClockDomain" />
+            <xs:field xpath="@Name" />
+          </xs:unique>
+        </xs:element>
+        <!-- SubSystem ENDS -->
+      </xs:sequence>
+
+      <xs:attribute name="Version" fixed="1.0" />
+    </xs:complexType>
+    <xs:unique name="unique-SubSystemName">
+      <xs:selector xpath="xlmm:SubSystem" />
+      <xs:field xpath="@Name" />
+    </xs:unique>
+  </xs:element>
+</xs:schema>
