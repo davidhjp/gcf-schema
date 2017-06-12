@@ -1,2 +1,2 @@
-# gfc-schema
+# gcf-schema
 SystemJ configuration schema
